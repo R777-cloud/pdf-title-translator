@@ -36,7 +36,11 @@ const TranslationRow = memo(({
         </TableCell>
         <TableCell colSpan={2} className="text-muted-foreground text-center italic h-16">
           {pageResult.status === "processing" ? "正在分析..." : 
-           pageResult.status === "failed" ? "分析失败" :
+           pageResult.status === "failed" ? (
+             <span title={pageResult.error} className="text-red-500 cursor-help border-b border-dotted border-red-500">
+               分析失败: {pageResult.error || "未知错误"}
+             </span>
+           ) :
            pageResult.status === "pending" ? "等待中..." : "未发现标题"}
         </TableCell>
       </TableRow>

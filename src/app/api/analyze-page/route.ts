@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getModel } from "@/lib/gemini";
+import { getModel, genAI } from "@/lib/gemini";
+
+// Set max duration to 60 seconds (max for Hobby plan)
+export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,8 +17,6 @@ export async function POST(req: NextRequest) {
 
     // Remove data:image/jpeg;base64, prefix if present
     const base64Image = image.replace(/^data:image\/\w+;base64,/, "");
-
-    const model = getModel();
 
     const prompt = `
 Role:
@@ -32,15 +33,32 @@ Example: [{"original": "中文标题", "translated": "English Title"}]
 If no titles are found, return empty array [].
 `;
 
-    const result = await model.generateContent([
-      prompt,
-      {
-        inlineData: {
-          data: base64Image,
-          mimeType: "image/jpeg",
-        },
+    const contentPart = {
+      inlineData: {
+        data: base64Image,
+        mimeType: "image/jpeg",
       },
-    ]);
+    };
+
+    let result;
+    try {
+      const model = getModel();
+      result = await model.generateContent([prompt, contentPart]);
+    } catch (primaryError: any) {
+      console.warn("Primary model failed, retrying with fallback model...", primaryError.message);
+      
+      // If primary model fails, try fallback strictly to gemini-1.5-pro
+      if (process.env.GOOGLE_MODEL_NAME !== "gemini-1.5-pro") {
+        try {
+          const fallbackModel = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+          result = await fallbackModel.generateContent([prompt, contentPart]);
+        } catch (fallbackError: any) {
+          throw new Error(`Primary and fallback models failed. Primary: ${primaryError.message}. Fallback: ${fallbackError.message}`);
+        }
+      } else {
+        throw primaryError;
+      }
+    }
 
     const response = await result.response;
     const text = response.text();
