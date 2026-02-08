@@ -1,65 +1,119 @@
-import Image from "next/image";
+"use client";
+
+import { FileUpload } from "@/components/FileUpload";
+import { ProcessingStatus } from "@/components/ProcessingStatus";
+import { TranslationTable } from "@/components/TranslationTable";
+import { usePdfProcessor } from "@/hooks/use-pdf-processor";
+import { Button } from "@/components/ui/button";
+import { DownloadButton } from "@/components/DownloadButton";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FileText } from "lucide-react";
 
 export default function Home() {
+  const { 
+    file, 
+    numPages, 
+    results, 
+    isProcessing, 
+    progress, 
+    loadPdf, 
+    startProcessing, 
+    stopProcessing, 
+    updateTranslation,
+    reset 
+  } = usePdfProcessor();
+
+  const handleFileSelect = (file: File) => {
+    loadPdf(file);
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <main className="container mx-auto py-8 px-4 space-y-8 min-h-screen flex flex-col">
+      <header className="flex items-center justify-between border-b pb-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">PDF 标题翻译助手</h1>
+          <p className="text-muted-foreground mt-1">
+            利用 AI 提取并翻译 PDF 文档中的中文标题。
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        {file && (
+          <div className="flex items-center gap-4">
+            <Button variant="outline" onClick={reset} disabled={isProcessing}>
+              重置
+            </Button>
+            <DownloadButton results={results} disabled={isProcessing || results.filter(r => r.items.length > 0).length === 0} />
+          </div>
+        )}
+      </header>
+
+      {!file ? (
+        <div className="flex-1 flex flex-col items-center justify-center py-12">
+          <Card className="w-full max-w-2xl">
+            <CardHeader>
+              <CardTitle>上传文档</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <FileUpload onFileSelect={handleFileSelect} />
+            </CardContent>
+          </Card>
         </div>
-      </main>
-    </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 flex-1">
+          {/* Sidebar */}
+          <div className="lg:col-span-1 space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  文件信息
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="text-sm font-medium truncate" title={file.name}>
+                  {file.name}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  共发现 {numPages} 页
+                </div>
+                
+                <div className="pt-4 border-t space-y-4">
+                  <ProcessingStatus progress={progress} total={numPages} results={results} />
+                  
+                  <div className="flex gap-2">
+                    {!isProcessing && progress < 100 && (
+                      <Button onClick={startProcessing} className="w-full">
+                        {progress > 0 ? "继续" : "开始分析"}
+                      </Button>
+                    )}
+                    {isProcessing && (
+                      <Button onClick={stopProcessing} variant="destructive" className="w-full">
+                        停止
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                 <CardTitle className="text-sm font-medium">提示</CardTitle>
+              </CardHeader>
+              <CardContent className="text-xs text-muted-foreground space-y-2">
+                <p>• 处理过程完全在浏览器中进行，保护您的隐私。</p>
+                <p>• 基于视觉分析仅提取标题内容。</p>
+                <p>• 下载前，您可以直接在表格中编辑翻译结果。</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Main Content */}
+          <div className="lg:col-span-3 h-[calc(100vh-200px)] min-h-[500px]">
+             {/* Pass results to TranslationTable. Since it is scrollable, we need to ensure container height. */}
+            <TranslationTable results={results} onUpdate={updateTranslation} />
+          </div>
+        </div>
+      )}
+    </main>
   );
 }
