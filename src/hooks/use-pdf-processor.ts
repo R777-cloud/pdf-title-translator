@@ -178,6 +178,8 @@ export function usePdfProcessor() {
                   return next;
                 });
               }
+              // CRITICAL FIX: Break the loop on final failure so we can move to the next item in queue
+              retries++; 
             } else {
               // Wait before retry (exponential backoff: 2s, 4s...)
               await new Promise(resolve => setTimeout(resolve, 2000 * Math.pow(2, retries)));

@@ -82,14 +82,22 @@ export default function Home() {
                   
                   <div className="flex flex-col gap-2">
                     {!isProcessing && progress < 100 && (
-                      <>
-                        <Button onClick={() => startProcessing("translate")} className="w-full">
-                          {progress > 0 ? "继续翻译" : "开始标题翻译"}
-                        </Button>
-                        <Button onClick={() => startProcessing("proofread")} className="w-full" variant="secondary">
+                      <div className="flex gap-2">
+                        <Button 
+                          onClick={() => startProcessing("proofread")} 
+                          className="flex-1" 
+                          variant={progress > 0 && taskType === "proofread" ? "default" : "outline"}
+                        >
                           {progress > 0 ? "继续纠错" : "开始智能纠错"}
                         </Button>
-                      </>
+                        <Button 
+                          onClick={() => startProcessing("translate")} 
+                          className="flex-1" 
+                          variant={progress > 0 && taskType === "translate" ? "default" : "outline"}
+                        >
+                          {progress > 0 ? "继续翻译" : "开始标题翻译"}
+                        </Button>
+                      </div>
                     )}
                     {isProcessing && (
                       <Button onClick={stopProcessing} variant="destructive" className="w-full">
