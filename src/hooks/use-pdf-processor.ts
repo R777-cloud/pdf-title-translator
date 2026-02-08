@@ -3,20 +3,28 @@
 import { useState, useCallback, useRef } from "react";
 import type { PDFDocumentProxy } from "pdfjs-dist";
 
-export interface TranslationItem {
-  original: string;
-  translated: string;
+export interface AnalysisItem {
+  // Translate mode
+  original?: string;
+  translated?: string;
+  
+  // Proofread mode
+  context?: string;
+  correction?: string;
+  explanation?: string;
+
+  [key: string]: string | undefined;
 }
 
 export interface PageResult {
   pageNumber: number;
   status: "pending" | "processing" | "completed" | "failed";
-  items: TranslationItem[];
+  items: AnalysisItem[];
   error?: string;
   originalImage?: string;
 }
 
-const CONCURRENT_LIMIT = 3;
+const CONCURRENT_LIMIT = 1;
 
 export function usePdfProcessor() {
   const [file, setFile] = useState<File | null>(null);
@@ -24,6 +32,7 @@ export function usePdfProcessor() {
   const [numPages, setNumPages] = useState(0);
   const [results, setResults] = useState<PageResult[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [taskType, setTaskType] = useState<"translate" | "proofread">("translate");
   
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -57,7 +66,7 @@ export function usePdfProcessor() {
     }
   }, []);
 
-  const processPage = async (pageIndex: number, doc: PDFDocumentProxy) => {
+  const processPage = async (pageIndex: number, doc: PDFDocumentProxy, task: string) => {
     try {
       const page = await doc.getPage(pageIndex + 1);
       const viewport = page.getViewport({ scale: 1.5 });
@@ -82,7 +91,7 @@ export function usePdfProcessor() {
       const response = await fetch("/api/analyze-page", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image: imageData }),
+        body: JSON.stringify({ image: imageData, task }),
       });
 
       if (!response.ok) {
@@ -99,12 +108,21 @@ export function usePdfProcessor() {
     }
   };
 
-  const startProcessing = useCallback(async () => {
+  const startProcessing = useCallback(async (task: "translate" | "proofread" = "translate") => {
     if (!pdfDoc) return;
     
+    setTaskType(task);
     setIsProcessing(true);
     abortControllerRef.current = new AbortController();
     const signal = abortControllerRef.current.signal;
+
+    // Reset results if task type changes or just restart pending/failed
+    // For simplicity, we just process pending/failed. 
+    // If user switches task, they might want to reset. 
+    // But let's assume UI handles reset if needed. 
+    // Actually, if we switch tasks, previous results are invalid.
+    // Let's NOT clear results automatically to allow "resume", but UI should probably prompt reset.
+    // For now, we just process what's pending.
 
     const queueIndices = results
       .map((r, i) => (r.status === "pending" || r.status === "failed" ? i : -1))
@@ -126,7 +144,7 @@ export function usePdfProcessor() {
         });
 
         try {
-          const items = await processPage(pageIndex, pdfDoc);
+          const items = await processPage(pageIndex, pdfDoc, task);
           
           if (!signal.aborted) {
             setResults((prev) => {
@@ -174,7 +192,7 @@ export function usePdfProcessor() {
     setIsProcessing(false);
   }, []);
 
-  const updateTranslation = useCallback((pageIndex: number, itemIndex: number, field: "original" | "translated", value: string) => {
+  const updateTranslation = useCallback((pageIndex: number, itemIndex: number, field: string, value: string) => {
     setResults(prev => {
       const next = [...prev];
       const page = { ...next[pageIndex] };
@@ -192,6 +210,7 @@ export function usePdfProcessor() {
     setNumPages(0);
     setResults([]);
     setIsProcessing(false);
+    setTaskType("translate");
   }, []);
 
   const progress = numPages > 0 
@@ -204,6 +223,7 @@ export function usePdfProcessor() {
     results,
     isProcessing,
     progress,
+    taskType,
     loadPdf,
     startProcessing,
     stopProcessing,

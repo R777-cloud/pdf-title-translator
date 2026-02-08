@@ -6,7 +6,7 @@ export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   try {
-    const { image } = await req.json();
+    const { image, task = "translate" } = await req.json();
 
     if (!image) {
       return NextResponse.json(
@@ -18,7 +18,8 @@ export async function POST(req: NextRequest) {
     // Remove data:image/jpeg;base64, prefix if present
     const base64Image = image.replace(/^data:image\/\w+;base64,/, "");
 
-    const prompt = `
+    const PROMPTS = {
+      translate: `
 Role:
 你是一位精通视觉分析、中文文案润色及英文母语水平的翻译专家。请分析上传的图片，识别并翻译其中的所有标题。
 
@@ -31,7 +32,32 @@ Output format:
 Strictly return a valid JSON array of objects. Do not wrap in markdown code blocks.
 Example: [{"original": "中文标题", "translated": "English Title"}]
 If no titles are found, return empty array [].
-`;
+`,
+      proofread: `
+Role： 你是一位极其严谨的文字编辑，精通中文和英文的语言规范及百科通识。你的任务是审查用户输入内容中的文本信息，找出其中的错误并提供修改建议。
+
+任务： 请检查当前提供的图片内容，识别中英文错别字、拼写错误及逻辑错误。
+
+Strict Constraints:
+1. 忽略专业术语、行业黑话、营销口号（如“破圈”、“赋能”、“超级增程”等均不算错）。
+2. 仅输出确定的错误。
+
+Output format:
+Strictly return a valid JSON array of objects. Do not wrap in markdown code blocks.
+Fields:
+- "context": "错误词" (The part with error)
+- "correction": "正确词" (The corrected content)
+- "explanation": Leave empty string "" or brief type like "错别字".
+
+If no errors are found (corresponding to "无"), return empty array [].
+
+Example:
+Input: "人工智障"
+Output: [{"context": "人工智障", "correction": "人工智能", "explanation": "错别字"}]
+`
+    };
+
+    const prompt = PROMPTS[task as keyof typeof PROMPTS] || PROMPTS.translate;
 
     const contentPart = {
       inlineData: {

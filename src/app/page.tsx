@@ -31,9 +31,9 @@ export default function Home() {
     <main className="container mx-auto py-8 px-4 space-y-8 min-h-screen flex flex-col">
       <header className="flex items-center justify-between border-b pb-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">PDF 标题翻译助手</h1>
+          <h1 className="text-3xl font-bold tracking-tight">PDF 智能助手</h1>
           <p className="text-muted-foreground mt-1">
-            利用 AI 提取并翻译 PDF 文档中的中文标题。
+            利用 AI 提取并翻译 PDF 标题，或进行智能纠错。
           </p>
         </div>
         {file && (
@@ -79,11 +79,16 @@ export default function Home() {
                 <div className="pt-4 border-t space-y-4">
                   <ProcessingStatus progress={progress} total={numPages} results={results} />
                   
-                  <div className="flex gap-2">
+                  <div className="flex flex-col gap-2">
                     {!isProcessing && progress < 100 && (
-                      <Button onClick={startProcessing} className="w-full">
-                        {progress > 0 ? "继续" : "开始分析"}
-                      </Button>
+                      <>
+                        <Button onClick={() => startProcessing("translate")} className="w-full">
+                          {progress > 0 ? "继续翻译" : "开始标题翻译"}
+                        </Button>
+                        <Button onClick={() => startProcessing("proofread")} className="w-full" variant="secondary">
+                          {progress > 0 ? "继续纠错" : "开始智能纠错"}
+                        </Button>
+                      </>
                     )}
                     {isProcessing && (
                       <Button onClick={stopProcessing} variant="destructive" className="w-full">

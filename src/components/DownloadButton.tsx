@@ -18,44 +18,40 @@ export function DownloadButton({ results, disabled }: DownloadButtonProps) {
     try {
       setIsGenerating(true);
 
-      const rows = [
-        new TableRow({
-          tableHeader: true,
-          children: [
-            new TableCell({
-              width: { size: 1000, type: WidthType.DXA },
-              children: [new Paragraph({ text: "页码", style: "Heading2" })],
-            }),
-            new TableCell({
-              width: { size: 4250, type: WidthType.DXA },
-              children: [new Paragraph({ text: "原文标题", style: "Heading2" })],
-            }),
-            new TableCell({
-              width: { size: 4250, type: WidthType.DXA },
-              children: [new Paragraph({ text: "英文翻译", style: "Heading2" })],
-            }),
-          ],
-        }),
-      ];
+      const firstCompleted = results.find(r => r.items.length > 0);
+      const isProofreadMode = firstCompleted ? "correction" in firstCompleted.items[0] : false;
+
+      const headerRow = new TableRow({
+        tableHeader: true,
+        children: isProofreadMode ? [
+          new TableCell({ width: { size: 1000, type: WidthType.DXA }, children: [new Paragraph({ text: "页码", style: "Heading2" })] }),
+          new TableCell({ width: { size: 2800, type: WidthType.DXA }, children: [new Paragraph({ text: "错误片段", style: "Heading2" })] }),
+          new TableCell({ width: { size: 2800, type: WidthType.DXA }, children: [new Paragraph({ text: "修正建议", style: "Heading2" })] }),
+          new TableCell({ width: { size: 2900, type: WidthType.DXA }, children: [new Paragraph({ text: "修改原因", style: "Heading2" })] }),
+        ] : [
+          new TableCell({ width: { size: 1000, type: WidthType.DXA }, children: [new Paragraph({ text: "页码", style: "Heading2" })] }),
+          new TableCell({ width: { size: 4250, type: WidthType.DXA }, children: [new Paragraph({ text: "原文标题", style: "Heading2" })] }),
+          new TableCell({ width: { size: 4250, type: WidthType.DXA }, children: [new Paragraph({ text: "英文翻译", style: "Heading2" })] }),
+        ],
+      });
+
+      const rows = [headerRow];
 
       results.forEach((page) => {
         if (page.items.length > 0) {
           page.items.forEach((item, index) => {
-            rows.push(
-              new TableRow({
-                children: [
-                  new TableCell({
-                    children: [new Paragraph({ text: index === 0 ? page.pageNumber.toString() : "" })],
-                  }),
-                  new TableCell({
-                    children: [new Paragraph({ text: item.original })],
-                  }),
-                  new TableCell({
-                    children: [new Paragraph({ text: item.translated })],
-                  }),
-                ],
-              })
-            );
+            const rowChildren = isProofreadMode ? [
+              new TableCell({ children: [new Paragraph({ text: index === 0 ? page.pageNumber.toString() : "" })] }),
+              new TableCell({ children: [new Paragraph({ text: item.context || "" })] }),
+              new TableCell({ children: [new Paragraph({ text: item.correction || "" })] }),
+              new TableCell({ children: [new Paragraph({ text: item.explanation || "" })] }),
+            ] : [
+              new TableCell({ children: [new Paragraph({ text: index === 0 ? page.pageNumber.toString() : "" })] }),
+              new TableCell({ children: [new Paragraph({ text: item.original || "" })] }),
+              new TableCell({ children: [new Paragraph({ text: item.translated || "" })] }),
+            ];
+
+            rows.push(new TableRow({ children: rowChildren }));
           });
         }
       });
@@ -66,7 +62,7 @@ export function DownloadButton({ results, disabled }: DownloadButtonProps) {
             properties: {},
             children: [
               new Paragraph({
-                text: "翻译报告",
+                text: isProofreadMode ? "智能纠错报告" : "翻译报告",
                 heading: "Heading1",
                 spacing: { after: 200 },
               }),
@@ -91,7 +87,7 @@ export function DownloadButton({ results, disabled }: DownloadButtonProps) {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "标题翻译报告.docx";
+      a.download = isProofreadMode ? "智能纠错报告.docx" : "标题翻译报告.docx";
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
