@@ -18,6 +18,8 @@ export async function POST(req: NextRequest) {
     // Remove data:image/jpeg;base64, prefix if present
     const base64Image = image.replace(/^data:image\/\w+;base64,/, "");
 
+    const today = new Date().toLocaleDateString("zh-CN", { year: 'numeric', month: 'long', day: 'numeric' });
+
     const PROMPTS = {
       translate: `
 Role:
@@ -36,11 +38,15 @@ If no titles are found, return empty array [].
       proofread: `
 Role： 你是一位极其严谨的文字编辑，精通中文和英文的语言规范及百科通识。你的任务是审查用户输入内容中的文本信息，找出其中的错误并提供修改建议。
 
+Context Info:
+Current Date: ${today} (所有时间逻辑判断必须以此日期为基准，2025年及之前均为过去或当前时间，绝非未来！)
+
 任务： 请检查当前提供的图片内容，识别中英文错别字、拼写错误及逻辑错误。
 
 Strict Constraints:
 1. 忽略专业术语、行业黑话、营销口号（如“破圈”、“赋能”、“超级增程”等均不算错）。
-2. 仅输出确定的错误。
+2. **严禁修改正确的时间年份**。除非年份格式有误，否则不要因为你的训练数据过时而认为未来的年份是错的。
+3. 仅输出确定的错误。
 
 Output format:
 Strictly return a valid JSON array of objects. Do not wrap in markdown code blocks.
