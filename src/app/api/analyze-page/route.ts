@@ -46,7 +46,11 @@ Current Date: ${today} (所有时间逻辑判断必须以此日期为基准，20
 Strict Constraints:
 1. 忽略专业术语、行业黑话、营销口号（如“破圈”、“赋能”、“超级增程”等均不算错）。
 2. **严禁修改正确的时间年份**。除非年份格式有误，否则不要因为你的训练数据过时而认为未来的年份是错的。
-3. 仅输出确定的错误。
+3. **进行图文一致性检查，但必须极其保守**。
+   - 仅当图片内容与文字描述存在**根本性、无可争议的冲突**时才报错（例如：图片是一只猫，文字却写“这是一只狗”）。
+   - **严禁**对车型分类、产品型号等专业领域进行主观臆断。如果你不能 100% 确定图片中的具体车型，就不要纠正车型描述（例如：不要轻易将“轿车”纠正为“MPV”，除非你确信那是一辆大巴车）。
+   - 如果存在任何模糊或不确定，默认文字是正确的。
+4. 仅输出确定的错误。
 
 Output format:
 Strictly return a valid JSON array of objects. Do not wrap in markdown code blocks.
@@ -101,6 +105,17 @@ Output: [{"context": "人工智障", "correction": "人工智能", "explanation"
     let data;
     try {
       data = JSON.parse(cleanText);
+      
+      // Normalize keys to lowercase to ensure frontend compatibility
+      if (Array.isArray(data)) {
+        data = data.map((item: any) => {
+          const newItem: any = {};
+          Object.keys(item).forEach(key => {
+            newItem[key.toLowerCase()] = item[key];
+          });
+          return newItem;
+        });
+      }
     } catch (e) {
       console.error("Failed to parse JSON:", text);
       return NextResponse.json(

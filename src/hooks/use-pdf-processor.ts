@@ -24,7 +24,7 @@ export interface PageResult {
   originalImage?: string;
 }
 
-const CONCURRENT_LIMIT = 1;
+// const CONCURRENT_LIMIT = 1; // Removed constant
 
 export function usePdfProcessor() {
   const [file, setFile] = useState<File | null>(null);
@@ -143,37 +143,54 @@ export function usePdfProcessor() {
           return next;
         });
 
-        try {
-          const items = await processPage(pageIndex, pdfDoc, task);
-          
-          if (!signal.aborted) {
-            setResults((prev) => {
-              const next = [...prev];
-              next[pageIndex] = { 
-                ...next[pageIndex], 
-                status: "completed", 
-                items: items 
-              };
-              return next;
-            });
-          }
-        } catch (err: any) {
-          if (!signal.aborted) {
-            setResults((prev) => {
-              const next = [...prev];
-              next[pageIndex] = { 
-                ...next[pageIndex], 
-                status: "failed", 
-                error: err.message 
-              };
-              return next;
-            });
+        let retries = 0;
+        const maxRetries = 2;
+        let success = false;
+
+        while (retries <= maxRetries && !success && !signal.aborted) {
+          try {
+            const items = await processPage(pageIndex, pdfDoc, task);
+            
+            if (!signal.aborted) {
+              setResults((prev) => {
+                const next = [...prev];
+                next[pageIndex] = { 
+                  ...next[pageIndex], 
+                  status: "completed", 
+                  items: items 
+                };
+                return next;
+              });
+              success = true;
+            }
+          } catch (err: any) {
+            console.warn(`Page ${pageIndex + 1} attempt ${retries + 1} failed:`, err);
+            
+            if (retries === maxRetries) {
+              if (!signal.aborted) {
+                setResults((prev) => {
+                  const next = [...prev];
+                  next[pageIndex] = { 
+                    ...next[pageIndex], 
+                    status: "failed", 
+                    error: err.message 
+                  };
+                  return next;
+                });
+              }
+            } else {
+              // Wait before retry (exponential backoff: 2s, 4s...)
+              await new Promise(resolve => setTimeout(resolve, 2000 * Math.pow(2, retries)));
+              retries++;
+            }
           }
         }
       }
     };
 
-    const workers = Array(Math.min(CONCURRENT_LIMIT, queueIndices.length))
+    const concurrencyLimit = task === "translate" ? 3 : 1;
+
+    const workers = Array(Math.min(concurrencyLimit, queueIndices.length))
       .fill(null)
       .map(() => worker());
 

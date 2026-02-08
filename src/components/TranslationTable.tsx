@@ -15,6 +15,7 @@ import { memo } from "react";
 
 interface TranslationTableProps {
   results: PageResult[];
+  mode: "translate" | "proofread";
   onUpdate: (pageIndex: number, itemIndex: number, field: string, value: string) => void;
 }
 
@@ -118,10 +119,9 @@ const TranslationRow = memo(({
 
 TranslationRow.displayName = "TranslationRow";
 
-export function TranslationTable({ results, onUpdate }: TranslationTableProps) {
-  // Determine global mode from first completed result to set headers
-  const firstCompleted = results.find(r => r.items.length > 0);
-  const isProofreadMode = firstCompleted ? "correction" in firstCompleted.items[0] : false;
+export function TranslationTable({ results, mode, onUpdate }: TranslationTableProps) {
+  // Determine global mode from props
+  const isProofreadMode = mode === "proofread";
 
   return (
     <div className="rounded-md border h-full flex flex-col bg-background">

@@ -20,7 +20,8 @@ export default function Home() {
     startProcessing, 
     stopProcessing, 
     updateTranslation,
-    reset 
+    reset,
+    taskType
   } = usePdfProcessor();
 
   const handleFileSelect = (file: File) => {
@@ -115,7 +116,7 @@ export default function Home() {
           {/* Main Content */}
           <div className="lg:col-span-3 h-[calc(100vh-200px)] min-h-[500px]">
              {/* Pass results to TranslationTable. Since it is scrollable, we need to ensure container height. */}
-            <TranslationTable results={results} onUpdate={updateTranslation} />
+            <TranslationTable results={results} mode={taskType} onUpdate={updateTranslation} />
           </div>
         </div>
       )}
