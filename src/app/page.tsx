@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { FileUpload } from "@/components/FileUpload";
 import { ProcessingStatus } from "@/components/ProcessingStatus";
@@ -7,8 +8,8 @@ import { TranslationTable } from "@/components/TranslationTable";
 import { usePdfProcessor } from "@/hooks/use-pdf-processor";
 import { Button } from "@/components/ui/button";
 import { DownloadButton } from "@/components/DownloadButton";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { FileText, KeyRound, ArrowRight } from "lucide-react";
 
 export default function Home() {
   const { 
@@ -27,9 +28,52 @@ export default function Home() {
     setApiKey
   } = usePdfProcessor();
 
+  const [isConfigured, setIsConfigured] = useState(false);
+
   const handleFileSelect = (file: File) => {
     loadPdf(file);
   };
+
+  const handleEnterApp = () => {
+    setIsConfigured(true);
+  };
+
+  if (!isConfigured) {
+    return (
+      <main className="flex min-h-screen items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
+        <Card className="w-full max-w-md shadow-lg">
+          <CardHeader className="text-center space-y-2">
+            <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit mb-2">
+              <KeyRound className="h-8 w-8 text-primary" />
+            </div>
+            <CardTitle className="text-2xl font-bold">欢迎使用 PDF 智能助手</CardTitle>
+            <CardDescription>
+              请输入您的 Google Gemini API Key 以开始使用
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Input 
+                type="password" 
+                placeholder="在此粘贴您的 API Key (sk-...)" 
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                className="text-center h-12 text-lg"
+              />
+              <p className="text-xs text-muted-foreground text-center">
+                如果您是应用所有者，可直接留空以使用默认配置。
+              </p>
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button className="w-full h-11 text-base" onClick={handleEnterApp}>
+              进入应用 <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </CardFooter>
+        </Card>
+      </main>
+    );
+  }
 
   return (
     <main className="container mx-auto py-8 px-4 space-y-8 min-h-screen flex flex-col">
@@ -41,13 +85,10 @@ export default function Home() {
           </p>
         </div>
         <div className="flex items-center gap-4">
-          <Input 
-            type="password" 
-            placeholder="自定义 Gemini API Key (可选)" 
-            value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
-            className="w-64"
-          />
+          <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={() => setIsConfigured(false)}>
+            <KeyRound className="mr-2 h-4 w-4" />
+            {apiKey ? "已配置 Key" : "使用默认 Key"}
+          </Button>
           {file && (
             <div className="flex items-center gap-4">
               <Button variant="outline" onClick={reset} disabled={isProcessing}>
