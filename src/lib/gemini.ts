@@ -14,6 +14,10 @@ const getClient = (apiKey?: string, accessCode?: string) => {
 
   // 2. If user provided a specific API Key (and it's NOT the access code), use it.
   if (apiKey) {
+    // Validate format to prevent using a wrong password as an API key
+    if (!apiKey.startsWith("AIza")) {
+      throw new Error("Invalid Access Code (or invalid API Key format). Did you forget to Redeploy after setting the code?");
+    }
     return new GoogleGenerativeAI(apiKey);
   }
 
