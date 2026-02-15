@@ -48,20 +48,20 @@ export default function Home() {
             </div>
             <CardTitle className="text-2xl font-bold">欢迎使用 PDF 智能助手</CardTitle>
             <CardDescription>
-              请输入您的 Google Gemini API Key 以开始使用
+              请输入您的 Google Gemini API Key 或团队访问密码以开始使用
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Input 
                 type="password" 
-                placeholder="在此粘贴您的 API Key (sk-...)" 
+                placeholder="API Key (sk-...) 或 团队密码" 
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
                 className="text-center h-12 text-lg"
               />
               <p className="text-xs text-muted-foreground text-center">
-                如果您是应用所有者，可直接留空以使用默认配置。
+                如果您是应用所有者，请使用预设的团队密码或 API Key。
               </p>
             </div>
           </CardContent>

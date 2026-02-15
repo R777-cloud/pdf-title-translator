@@ -6,7 +6,7 @@ export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   try {
-    const { image, task = "translate", apiKey } = await req.json();
+    const { image, task = "translate", apiKey, accessCode } = await req.json();
 
     if (!image) {
       return NextResponse.json(
@@ -77,7 +77,7 @@ Output: [{"context": "人工智障", "correction": "人工智能", "explanation"
 
     let result;
     try {
-      const model = getModel(apiKey);
+      const model = getModel(apiKey, accessCode);
       result = await model.generateContent([prompt, contentPart]);
     } catch (primaryError: any) {
       console.warn("Primary model failed, retrying with fallback model...", primaryError.message);
@@ -85,7 +85,7 @@ Output: [{"context": "人工智障", "correction": "人工智能", "explanation"
       // If primary model fails, try fallback strictly to gemini-1.5-pro
       if (process.env.GOOGLE_MODEL_NAME !== "gemini-1.5-pro") {
         try {
-          const fallbackModel = getFallbackModel(apiKey);
+          const fallbackModel = getFallbackModel(apiKey, accessCode);
           result = await fallbackModel.generateContent([prompt, contentPart]);
         } catch (fallbackError: any) {
           throw new Error(`Primary and fallback models failed. Primary: ${primaryError.message}. Fallback: ${fallbackError.message}`);
