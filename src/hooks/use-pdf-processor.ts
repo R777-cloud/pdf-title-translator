@@ -33,6 +33,7 @@ export function usePdfProcessor() {
   const [results, setResults] = useState<PageResult[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [taskType, setTaskType] = useState<"translate" | "proofread">("translate");
+  const [apiKey, setApiKey] = useState<string>("");
   
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -91,7 +92,7 @@ export function usePdfProcessor() {
       const response = await fetch("/api/analyze-page", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image: imageData, task }),
+        body: JSON.stringify({ image: imageData, task, apiKey }),
       });
 
       if (!response.ok) {
@@ -247,6 +248,8 @@ export function usePdfProcessor() {
     startProcessing,
     stopProcessing,
     updateTranslation,
-    reset
+    reset,
+    apiKey,
+    setApiKey
   };
 }

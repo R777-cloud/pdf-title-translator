@@ -1,5 +1,6 @@
 "use client";
 
+import { Input } from "@/components/ui/input";
 import { FileUpload } from "@/components/FileUpload";
 import { ProcessingStatus } from "@/components/ProcessingStatus";
 import { TranslationTable } from "@/components/TranslationTable";
@@ -21,7 +22,9 @@ export default function Home() {
     stopProcessing, 
     updateTranslation,
     reset,
-    taskType
+    taskType,
+    apiKey,
+    setApiKey
   } = usePdfProcessor();
 
   const handleFileSelect = (file: File) => {
@@ -37,14 +40,23 @@ export default function Home() {
             利用 AI 提取并翻译 PDF 标题，或进行智能纠错。
           </p>
         </div>
-        {file && (
-          <div className="flex items-center gap-4">
-            <Button variant="outline" onClick={reset} disabled={isProcessing}>
-              重置
-            </Button>
-            <DownloadButton results={results} disabled={isProcessing || results.filter(r => r.items.length > 0).length === 0} />
-          </div>
-        )}
+        <div className="flex items-center gap-4">
+          <Input 
+            type="password" 
+            placeholder="自定义 Gemini API Key (可选)" 
+            value={apiKey}
+            onChange={(e) => setApiKey(e.target.value)}
+            className="w-64"
+          />
+          {file && (
+            <div className="flex items-center gap-4">
+              <Button variant="outline" onClick={reset} disabled={isProcessing}>
+                重置
+              </Button>
+              <DownloadButton results={results} disabled={isProcessing || results.filter(r => r.items.length > 0).length === 0} />
+            </div>
+          )}
+        </div>
       </header>
 
       {!file ? (
