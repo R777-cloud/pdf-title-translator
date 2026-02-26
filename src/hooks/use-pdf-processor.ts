@@ -130,14 +130,20 @@ export function usePdfProcessor() {
       .map((r, i) => (r.status === "pending" || r.status === "failed" ? i : -1))
       .filter((i) => i !== -1);
 
+    // Limit batch size if we are resuming from failure to avoid overwhelming the system
+    const hasFailures = results.some(r => r.status === "failed");
+    const BATCH_SIZE = hasFailures ? 5 : 20; 
+    
+    const limitedQueueIndices = queueIndices.slice(0, BATCH_SIZE);
+
     let currentIndex = 0;
 
     const worker = async () => {
-      while (currentIndex < queueIndices.length && !signal.aborted) {
+      while (currentIndex < limitedQueueIndices.length && !signal.aborted) {
         const queueIndex = currentIndex++;
-        if (queueIndex >= queueIndices.length) break;
+        if (queueIndex >= limitedQueueIndices.length) break;
 
-        const pageIndex = queueIndices[queueIndex];
+        const pageIndex = limitedQueueIndices[queueIndex];
 
         setResults((prev) => {
           const next = [...prev];
@@ -194,7 +200,7 @@ export function usePdfProcessor() {
 
     const concurrencyLimit = task === "translate" ? 3 : 1;
 
-    const workers = Array(Math.min(concurrencyLimit, queueIndices.length))
+    const workers = Array(Math.min(concurrencyLimit, limitedQueueIndices.length))
       .fill(null)
       .map(() => worker());
 
