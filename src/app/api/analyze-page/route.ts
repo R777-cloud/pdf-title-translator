@@ -30,6 +30,10 @@ Role:
 短标题（2行以内）： 直接进行专业翻译，确保符合母语表达习惯。
 图片左上角或右上角的Logo无需翻译。
 
+**Special Rules**:
+1. "小鹏第二代VLA" 必须翻译为 "XPENG VLA 2.0"。
+2. **已有英文标题无需翻译**，请直接忽略。
+
 Output format:
 Strictly return a valid JSON array of objects. Do not wrap in markdown code blocks.
 Example: [{"original": "中文标题", "translated": "English Title"}]
@@ -49,7 +53,10 @@ Strict Constraints:
 3. 重点关注中英文拼写、中文错别字或英文语法错误导致的事实性错误。
 4. 如果修正建议与原文完全一致，则无需修改：绝不要强行纠正内容，返回空数组 []。
 5. 不要对同义词、近义词或不同的表达习惯进行纠错：例如“聆听”与“倾听”、“查看”与“查阅”等，只要符合语法且不产生歧义，均视为正确。
-6. 仅输出确定的错误。
+6. **特定术语强制规则**：
+   - "小鹏第二代VLA" 必须统一翻译或纠正为 "XPENG VLA 2.0"。
+   - 如果原文已经是英文标题，无需翻译，直接忽略（返回空数组或不输出该条目）。
+7. 仅输出确定的错误。
 
 Output format:
 Strictly return a valid JSON array of objects. Do not wrap in markdown code blocks.

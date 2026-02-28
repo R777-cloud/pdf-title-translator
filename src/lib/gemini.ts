@@ -40,6 +40,8 @@ export const genAI = process.env.GOOGLE_API_KEY
 export const getModel = (apiKey?: string, accessCode?: string) => {
   const client = getClient(apiKey, accessCode);
   const modelName = process.env.GOOGLE_MODEL_NAME || "gemini-1.5-pro";
+  // Allow switching to gemini-2.0-flash via env if needed, but keeping 1.5-pro as stable default
+  // User requested gemini-3.1-pro specifically via Vercel env later
   return client.getGenerativeModel({ model: modelName });
 };
 
