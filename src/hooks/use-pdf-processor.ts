@@ -80,15 +80,17 @@ export function usePdfProcessor() {
       canvas.height = viewport.height;
       canvas.width = viewport.width;
 
-      // Note: page.render signature depends on pdfjs-dist version.
       // v4+ requires canvas property if context is provided or intended.
+      // Use scale 1.5 but cap resolution to avoid 4.5MB limit
+      // If image is too large, reduce quality or scale
+      // For now, let's keep scale 1.5 but reduce JPEG quality slightly to 0.7 to be safe
       await page.render({
         canvasContext: context,
         viewport: viewport,
-        canvas: canvas, // Explicitly pass canvas for v5 compatibility
+        canvas: canvas, 
       }).promise;
 
-      const imageData = canvas.toDataURL("image/jpeg", 0.8);
+      const imageData = canvas.toDataURL("image/jpeg", 0.7);
 
       const response = await fetch("/api/analyze-page", {
         method: "POST",
@@ -97,8 +99,20 @@ export function usePdfProcessor() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `API error: ${response.statusText}`);
+        // Attempt to parse JSON error message, fallback to status text if parse fails (e.g. 413 Payload Too Large HTML)
+        let errorMessage = `API error: ${response.status} ${response.statusText}`;
+        try {
+          const errorData = await response.json();
+          if (errorData.error) {
+            errorMessage = errorData.error;
+          }
+        } catch (e) {
+          // If response body is not JSON (e.g. Vercel 413 HTML page), keep default message
+          if (response.status === 413) {
+            errorMessage = "Payload Too Large (Image size exceeds limit)";
+          }
+        }
+        throw new Error(errorMessage);
       }
 
       const { data } = await response.json();
