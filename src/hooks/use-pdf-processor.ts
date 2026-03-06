@@ -212,7 +212,7 @@ export function usePdfProcessor() {
       }
     };
 
-    const concurrencyLimit = task === "translate" ? 3 : 1;
+    const concurrencyLimit = 3; // Always allow concurrency even for retries/proofread to avoid getting stuck
 
     const workers = Array(Math.min(concurrencyLimit, limitedQueueIndices.length))
       .fill(null)
