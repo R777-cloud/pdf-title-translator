@@ -1,0 +1,13 @@
+version: '3'
+
+services:
+  pdf-translator:
+    build: .
+    container_name: pdf-translator
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - GOOGLE_API_KEY=your_api_key_here
+      - TEAM_ACCESS_CODE=your_team_password
+      - GOOGLE_MODEL_NAME=gemini-1.5-pro
