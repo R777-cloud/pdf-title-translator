@@ -43,8 +43,9 @@ export function usePdfProcessor() {
       // Dynamic import to avoid SSR issues with DOMMatrix
       const pdfjsLib = await import("pdfjs-dist");
       
-      // Initialize worker
-      if (typeof window !== "undefined" && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
+      // Initialize worker. We explicitly set the worker source to the public directory version.
+      // This is crucial for Vercel deployments.
+      if (typeof window !== "undefined") {
         pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
       }
 
