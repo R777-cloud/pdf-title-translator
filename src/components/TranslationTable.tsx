@@ -34,14 +34,17 @@ const TranslationRow = memo(({
         <TableCell className="font-medium w-[80px] align-top text-muted-foreground">
           第 {pageResult.pageNumber} 页
         </TableCell>
-        <TableCell colSpan={4} className="text-muted-foreground text-center italic h-16">
+        <TableCell colSpan={4} className="text-muted-foreground h-16">
           {pageResult.status === "processing" ? "正在分析..." : 
            pageResult.status === "failed" ? (
-             <span title={pageResult.error} className="text-red-500 cursor-help border-b border-dotted border-red-500">
-               分析失败: {pageResult.error || "未知错误"}
-             </span>
+             <div className="space-y-1 py-2 text-left">
+               <div className="text-red-500 font-medium">分析失败</div>
+               <pre className="whitespace-pre-wrap break-words text-xs text-red-500/90 font-mono">
+                 {pageResult.error || "未知错误"}
+               </pre>
+             </div>
            ) :
-           pageResult.status === "pending" ? "等待中..." : "未发现相关内容"}
+           pageResult.status === "pending" ? <div className="text-center italic">等待中...</div> : <div className="text-center italic">未发现相关内容</div>}
         </TableCell>
       </TableRow>
     );

@@ -32,6 +32,7 @@ export function usePdfProcessor() {
   const [numPages, setNumPages] = useState(0);
   const [results, setResults] = useState<PageResult[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [taskType, setTaskType] = useState<"translate" | "proofread">("translate");
   const [apiKey, setApiKey] = useState<string>("");
   const [accessCode, setAccessCode] = useState<string>("");
@@ -50,6 +51,7 @@ export function usePdfProcessor() {
       const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer, disableWorker: true } as any);
       const doc = await loadingTask.promise;
       
+      setLoadError(null);
       setFile(file);
       setPdfDoc(doc);
       setNumPages(doc.numPages);
@@ -62,7 +64,7 @@ export function usePdfProcessor() {
       setResults(initialResults);
     } catch (error: any) {
       console.error("Error loading PDF:", error);
-      alert(`Failed to load PDF: ${error?.message || "Unknown error"}`);
+      setLoadError(error?.message || "Unknown error");
     }
   }, []);
 
@@ -251,6 +253,7 @@ export function usePdfProcessor() {
     setNumPages(0);
     setResults([]);
     setIsProcessing(false);
+    setLoadError(null);
     setTaskType("translate");
   }, []);
 
@@ -263,6 +266,7 @@ export function usePdfProcessor() {
     numPages,
     results,
     isProcessing,
+    loadError,
     progress,
     taskType,
     loadPdf,
