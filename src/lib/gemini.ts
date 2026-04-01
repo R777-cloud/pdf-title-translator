@@ -162,16 +162,16 @@ const getClient = (apiKey?: string, accessCode?: string) => {
 
 export const getModel = (apiKey?: string, accessCode?: string) => {
   const client = getClient(apiKey, accessCode);
-  const modelName = process.env.GOOGLE_MODEL_NAME || "gemini-1.5-pro";
+  const modelName = process.env.GOOGLE_MODEL_NAME || "gemini-2.5-pro";
   return client.getGenerativeModel({ model: modelName });
 };
 
 export const getFallbackModel = (apiKey?: string, accessCode?: string) => {
   const client = getClient(apiKey, accessCode);
-  return client.getGenerativeModel({ model: "gemini-1.5-pro" });
+  return client.getGenerativeModel({ model: "gemini-2.5-pro" });
 };
 
 export const getVisionFallbackModel = (apiKey?: string, accessCode?: string) => {
   const client = getClient(apiKey, accessCode);
-  return client.getGenerativeModel({ model: "gemini-1.5-pro" });
+  return client.getGenerativeModel({ model: "gemini-2.5-pro" });
 };

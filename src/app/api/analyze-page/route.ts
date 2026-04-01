@@ -103,8 +103,8 @@ Output: [{"context": "人工智障", "correction": "人工智能", "explanation"
         }
       } else 
       
-      // If primary model fails, try fallback strictly to gemini-1.5-pro
-      if (process.env.GOOGLE_MODEL_NAME !== "gemini-1.5-pro") {
+      // If primary model fails, try fallback strictly to gemini-2.5-pro
+      if (process.env.GOOGLE_MODEL_NAME !== "gemini-2.5-pro") {
         try {
           const fallbackModel = getFallbackModel(apiKey, accessCode);
           result = await fallbackModel.generateContent([prompt, contentPart]);
