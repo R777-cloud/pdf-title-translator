@@ -2,6 +2,8 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 type ContentPart = string | { inlineData?: { data: string; mimeType: string }; text?: string };
 
+const isOpenAICompatible = (apiKey?: string) => apiKey?.startsWith("sk-") ?? false;
+
 const getResolvedApiKey = (apiKey?: string, accessCode?: string) => {
   const serverAccessCode = process.env.TEAM_ACCESS_CODE;
   const envKey = process.env.GOOGLE_API_KEY;
@@ -38,12 +40,76 @@ const getResolvedApiKey = (apiKey?: string, accessCode?: string) => {
 const toParts = (content: ContentPart[]) =>
   content.map((part) => (typeof part === "string" ? { text: part } : part));
 
+const toOpenAIContent = (content: ContentPart[]) =>
+  content.flatMap((part): any[] => {
+    if (typeof part === "string") {
+      return [{ type: "text", text: part }];
+    }
+
+    if (part.text) {
+      return [{ type: "text", text: part.text }];
+    }
+
+    if (part.inlineData) {
+      return [
+        {
+          type: "image_url",
+          image_url: {
+            url: `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`,
+          },
+        },
+      ];
+    }
+
+    return [];
+  });
+
 const getCustomClient = (apiKey?: string, accessCode?: string) => {
   const baseUrl = process.env.GOOGLE_API_BASE_URL?.replace(/\/$/, "");
   const resolvedApiKey = getResolvedApiKey(apiKey, accessCode);
+  const protocol = process.env.GOOGLE_API_PROTOCOL || (isOpenAICompatible(resolvedApiKey) ? "openai" : "gemini");
 
   if (!baseUrl) {
     return null;
+  }
+
+  if (protocol === "openai") {
+    return {
+      getGenerativeModel: ({ model }: { model: string }) => ({
+        generateContent: async (content: ContentPart[]) => {
+          const response = await fetch(`${baseUrl}/v1/chat/completions`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${resolvedApiKey}`,
+            },
+            body: JSON.stringify({
+              model,
+              messages: [
+                {
+                  role: "user",
+                  content: toOpenAIContent(content),
+                },
+              ],
+            }),
+          });
+
+          if (!response.ok) {
+            const text = await response.text();
+            throw new Error(`Custom API request failed: ${response.status} ${response.statusText} ${text}`.trim());
+          }
+
+          const data = await response.json();
+          const text = data?.choices?.[0]?.message?.content || "";
+
+          return {
+            response: {
+              text: () => text,
+            },
+          };
+        },
+      }),
+    };
   }
 
   return {
