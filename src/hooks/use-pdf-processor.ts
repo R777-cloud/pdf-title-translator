@@ -44,8 +44,9 @@ export function usePdfProcessor() {
       const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
 
       // Use app-hosted worker to avoid CDN/network variability.
+      // Append the pdfjs version to bust stale CDN/browser cache after deployments.
       if (typeof window !== "undefined") {
-        pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `/pdf.worker.min.mjs?v=${pdfjsLib.version}`;
       }
 
       const arrayBuffer = await file.arrayBuffer();
