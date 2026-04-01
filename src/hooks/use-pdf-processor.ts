@@ -71,7 +71,8 @@ export function usePdfProcessor() {
   const processPage = async (pageIndex: number, doc: PDFDocumentProxy, task: string) => {
     try {
       const page = await doc.getPage(pageIndex + 1);
-      const viewport = page.getViewport({ scale: 1.5 });
+      // Use scale 1.0 (down from 1.5) to drastically reduce image size for Vercel 4.5MB limit
+      const viewport = page.getViewport({ scale: 1.0 });
       const canvas = document.createElement("canvas");
       const context = canvas.getContext("2d");
       
@@ -81,16 +82,14 @@ export function usePdfProcessor() {
       canvas.width = viewport.width;
 
       // v4+ requires canvas property if context is provided or intended.
-      // Use scale 1.5 but cap resolution to avoid 4.5MB limit
-      // If image is too large, reduce quality or scale
-      // For now, let's keep scale 1.5 but reduce JPEG quality slightly to 0.7 to be safe
+      // Using scale 1.0 and quality 0.6 to guarantee images fit in Vercel's strict 4.5MB request limit
       await page.render({
         canvasContext: context,
         viewport: viewport,
         canvas: canvas, 
       }).promise;
 
-      const imageData = canvas.toDataURL("image/jpeg", 0.7);
+      const imageData = canvas.toDataURL("image/jpeg", 0.6);
 
       const response = await fetch("/api/analyze-page", {
         method: "POST",
