@@ -140,15 +140,18 @@ export function usePdfProcessor() {
     // Let's NOT clear results automatically to allow "resume", but UI should probably prompt reset.
     // For now, we just process what's pending.
 
-    const queueIndices = results
-      .map((r, i) => (r.status === "pending" || r.status === "failed" ? i : -1))
-      .filter((i) => i !== -1);
-
     // Limit batch size if we are resuming from failure to avoid overwhelming the system
-    const hasFailures = results.some(r => r.status === "failed");
-    const BATCH_SIZE = hasFailures ? 5 : 20; 
+    // But ONLY process pending items to skip previously failed items.
+    const BATCH_SIZE = 20; 
     
-    const limitedQueueIndices = queueIndices.slice(0, BATCH_SIZE);
+    // We only process 'pending' items. 'failed' items are ignored unless user explicitly wants to retry them?
+    // Actually, if they failed due to "Payload Too Large", retrying them won't help unless we reduce size.
+    // Let's change the filter to ONLY include "pending" items.
+    const pendingIndices = results
+      .map((r, i) => (r.status === "pending" ? i : -1))
+      .filter((i) => i !== -1);
+      
+    const limitedQueueIndices = pendingIndices.slice(0, BATCH_SIZE);
 
     let currentIndex = 0;
 
