@@ -41,14 +41,15 @@ export function usePdfProcessor() {
 
   const loadPdf = useCallback(async (file: File) => {
     try {
-      // Use legacy build for broader browser compatibility.
-      // We also disable worker usage below, so upload/parsing does not depend on worker loading.
       const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
 
+      // Use app-hosted worker to avoid CDN/network variability.
+      if (typeof window !== "undefined") {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+      }
+
       const arrayBuffer = await file.arrayBuffer();
-      // Force-disable the worker so PDF upload does not depend on worker loading at all.
-      // This is slower, but much more reliable across custom domains / changed IP networks.
-      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer, disableWorker: true } as any);
+      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
       const doc = await loadingTask.promise;
       
       setLoadError(null);
