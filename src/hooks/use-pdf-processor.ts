@@ -40,13 +40,9 @@ export function usePdfProcessor() {
 
   const loadPdf = useCallback(async (file: File) => {
     try {
-      // Dynamic import to avoid SSR issues with DOMMatrix
-      const pdfjsLib = await import("pdfjs-dist");
-      
-      // Use the app-hosted worker first so PDF upload does not depend on external CDN reachability.
-      if (typeof window !== "undefined") {
-        pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
-      }
+      // Use legacy build for broader browser compatibility.
+      // We also disable worker usage below, so upload/parsing does not depend on worker loading.
+      const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
 
       const arrayBuffer = await file.arrayBuffer();
       // Force-disable the worker so PDF upload does not depend on worker loading at all.
