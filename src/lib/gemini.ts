@@ -3,11 +3,9 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 const getClient = (apiKey?: string, accessCode?: string) => {
   const serverAccessCode = process.env.TEAM_ACCESS_CODE;
 
-  // 1. If user input matches the Team Access Code, use the SERVER'S default API Key.
+  // 1. If user input matches the Team Access Code, use the server-side default API Key.
   if (serverAccessCode && apiKey === serverAccessCode) {
-    // UPDATED: Use the new API Key provided by the user directly in code as the ultimate fallback/default
-    // if the Vercel environment variable is not updated.
-    const defaultKey = process.env.GOOGLE_API_KEY || "REDACTED_GOOGLE_API_KEY";
+    const defaultKey = process.env.GOOGLE_API_KEY;
     if (!defaultKey) {
       throw new Error("Server configuration error: GOOGLE_API_KEY is not set.");
     }
@@ -25,9 +23,12 @@ const getClient = (apiKey?: string, accessCode?: string) => {
   }
 
   // 3. Fallback: If no team code is configured on server (dev mode or public),
-  // AND no code/key provided by user, allow default key (backward compatibility).
+  // AND no code/key provided by user, allow the server-side default key.
   if (!serverAccessCode) {
-     const fallbackKey = process.env.GOOGLE_API_KEY || "REDACTED_GOOGLE_API_KEY";
+     const fallbackKey = process.env.GOOGLE_API_KEY;
+     if (!fallbackKey) {
+       throw new Error("Server configuration error: GOOGLE_API_KEY is not set.");
+     }
      return new GoogleGenerativeAI(fallbackKey);
   }
 
