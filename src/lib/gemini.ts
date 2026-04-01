@@ -64,10 +64,10 @@ const toOpenAIContent = (content: ContentPart[]) =>
     return [];
   });
 
-const getCustomClient = (apiKey?: string, accessCode?: string) => {
+const getCustomClient = (apiKey?: string, accessCode?: string, protocolOverride?: "gemini" | "openai") => {
   const baseUrl = process.env.GOOGLE_API_BASE_URL?.replace(/\/$/, "");
   const resolvedApiKey = getResolvedApiKey(apiKey, accessCode);
-  const protocol = process.env.GOOGLE_API_PROTOCOL || "gemini";
+  const protocol = protocolOverride || process.env.GOOGLE_API_PROTOCOL || "gemini";
 
   if (!baseUrl) {
     return null;
@@ -157,8 +157,8 @@ const getGoogleClient = (apiKey?: string, accessCode?: string) => {
   return new GoogleGenerativeAI(resolvedApiKey);
 };
 
-const getClient = (apiKey?: string, accessCode?: string) => {
-  return getCustomClient(apiKey, accessCode) || getGoogleClient(apiKey, accessCode);
+const getClient = (apiKey?: string, accessCode?: string, protocolOverride?: "gemini" | "openai") => {
+  return getCustomClient(apiKey, accessCode, protocolOverride) || getGoogleClient(apiKey, accessCode);
 };
 
 const getDefaultVisionModelName = () => {
@@ -181,6 +181,17 @@ const getDefaultVisionModelName = () => {
 export const getModel = (apiKey?: string, accessCode?: string) => {
   const client = getClient(apiKey, accessCode);
   const modelName = getDefaultVisionModelName();
+  return client.getGenerativeModel({ model: modelName });
+};
+
+export const getModelWithProtocol = (
+  apiKey?: string,
+  accessCode?: string,
+  protocolOverride?: "gemini" | "openai",
+  modelNameOverride?: string,
+) => {
+  const client = getClient(apiKey, accessCode, protocolOverride);
+  const modelName = modelNameOverride || getDefaultVisionModelName();
   return client.getGenerativeModel({ model: modelName });
 };
 

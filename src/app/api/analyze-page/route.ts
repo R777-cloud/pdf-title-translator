@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getModel, getFallbackModel, getVisionFallbackModel } from "@/lib/gemini";
+import { getModel, getFallbackModel, getVisionFallbackModel, getModelWithProtocol } from "@/lib/gemini";
 
 // Set max duration to 60 seconds (max for Hobby plan)
 export const maxDuration = 60;
@@ -91,14 +91,21 @@ Output: [{"context": "人工智障", "correction": "人工智能", "explanation"
 
       const primaryMessage = String(primaryError?.message || primaryError || "");
 
-      // If the configured model is text-only, automatically fall back to a vision-capable model.
-      if (/does not support image input|image input/i.test(primaryMessage)) {
+      // If the configured path/model rejects image input, automatically retry with alternate transport protocol.
+      if (/does not support image input|image input|Provided image is not valid|Unable to process input image/i.test(primaryMessage)) {
         try {
-          const visionFallbackModel = getVisionFallbackModel(apiKey, accessCode);
-          result = await visionFallbackModel.generateContent([prompt, contentPart]);
+          const currentProtocol = (process.env.GOOGLE_API_PROTOCOL || "gemini") as "gemini" | "openai";
+          const alternateProtocol = currentProtocol === "gemini" ? "openai" : "gemini";
+          const alternateModel = getModelWithProtocol(
+            apiKey,
+            accessCode,
+            alternateProtocol,
+            process.env.GOOGLE_VISION_MODEL_NAME || process.env.GOOGLE_MODEL_NAME || "gemini-3.1-pro-preview",
+          );
+          result = await alternateModel.generateContent([prompt, contentPart]);
         } catch (visionFallbackError: any) {
           throw new Error(
-            `当前配置的模型不支持图片输入。请将 Vercel 中的 GOOGLE_MODEL_NAME 改为支持视觉的 Gemini 模型。原始错误: ${primaryMessage}. 回退错误: ${visionFallbackError.message}`
+            `图片请求失败。已自动尝试另一种图片传输协议但仍失败。原始错误: ${primaryMessage}. 备用协议错误: ${visionFallbackError.message}`
           );
         }
       } else 
