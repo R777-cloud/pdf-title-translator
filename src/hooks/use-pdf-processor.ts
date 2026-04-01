@@ -49,7 +49,9 @@ export function usePdfProcessor() {
       }
 
       const arrayBuffer = await file.arrayBuffer();
-      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+      // Force-disable the worker so PDF upload does not depend on worker loading at all.
+      // This is slower, but much more reliable across custom domains / changed IP networks.
+      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer, disableWorker: true } as any);
       const doc = await loadingTask.promise;
       
       setFile(file);
@@ -62,9 +64,9 @@ export function usePdfProcessor() {
         items: [],
       }));
       setResults(initialResults);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error loading PDF:", error);
-      alert("Failed to load PDF. Please try a valid file.");
+      alert(`Failed to load PDF: ${error?.message || "Unknown error"}`);
     }
   }, []);
 
