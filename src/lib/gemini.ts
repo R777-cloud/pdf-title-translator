@@ -16,12 +16,10 @@ const getClient = (apiKey?: string, accessCode?: string) => {
 
   // 2. If user provided a specific API Key (and it's NOT the access code), use it.
   if (apiKey) {
-    // Trim whitespace just in case
     const cleanKey = apiKey.trim();
     // Validate format to prevent using a wrong password as an API key
-    // Google Gemini API keys start with 'AIza'
     if (!cleanKey.startsWith("AIza")) {
-      throw new Error("Invalid Access Code (or invalid API Key format). Did you forget to Redeploy after setting the code?");
+      throw new Error("Invalid Access Code (or invalid API Key format). Please double-check your code.");
     }
     return new GoogleGenerativeAI(cleanKey);
   }
