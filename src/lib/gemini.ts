@@ -160,18 +160,31 @@ const getClient = (apiKey?: string, accessCode?: string) => {
   return getCustomClient(apiKey, accessCode) || getGoogleClient(apiKey, accessCode);
 };
 
+const getDefaultVisionModelName = () => {
+  if (process.env.GOOGLE_VISION_MODEL_NAME) {
+    return process.env.GOOGLE_VISION_MODEL_NAME;
+  }
+
+  // Custom gateways often expose dedicated image-capable models.
+  if (process.env.GOOGLE_API_BASE_URL) {
+    return "gemini-2.5-flash-image";
+  }
+
+  return process.env.GOOGLE_MODEL_NAME || "gemini-2.5-pro";
+};
+
 export const getModel = (apiKey?: string, accessCode?: string) => {
   const client = getClient(apiKey, accessCode);
-  const modelName = process.env.GOOGLE_MODEL_NAME || "gemini-2.5-pro";
+  const modelName = getDefaultVisionModelName();
   return client.getGenerativeModel({ model: modelName });
 };
 
 export const getFallbackModel = (apiKey?: string, accessCode?: string) => {
   const client = getClient(apiKey, accessCode);
-  return client.getGenerativeModel({ model: "gemini-2.5-pro" });
+  return client.getGenerativeModel({ model: getDefaultVisionModelName() });
 };
 
 export const getVisionFallbackModel = (apiKey?: string, accessCode?: string) => {
   const client = getClient(apiKey, accessCode);
-  return client.getGenerativeModel({ model: "gemini-2.5-pro" });
+  return client.getGenerativeModel({ model: getDefaultVisionModelName() });
 };
