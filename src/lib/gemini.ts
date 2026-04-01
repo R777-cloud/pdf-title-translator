@@ -166,11 +166,16 @@ const getDefaultVisionModelName = () => {
     return process.env.GOOGLE_VISION_MODEL_NAME;
   }
 
+  // Always respect the explicitly configured model name first.
+  if (process.env.GOOGLE_MODEL_NAME) {
+    return process.env.GOOGLE_MODEL_NAME;
+  }
+
   if (process.env.GOOGLE_API_BASE_URL) {
     return "gemini-3.1-pro-preview";
   }
 
-  return process.env.GOOGLE_MODEL_NAME || "gemini-3.1-pro-preview";
+  return "gemini-3.1-pro-preview";
 };
 
 export const getModel = (apiKey?: string, accessCode?: string) => {

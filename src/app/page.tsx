@@ -49,7 +49,7 @@ export default function Home() {
             </div>
             <CardTitle className="text-2xl font-bold">欢迎使用 PDF 智能助手</CardTitle>
             <CardDescription>
-              请输入您的 Google Gemini API Key 或团队访问密码以开始使用
+              请输入您的 AI API Key 或团队访问密码以开始使用
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
