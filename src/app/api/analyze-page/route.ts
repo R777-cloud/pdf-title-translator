@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getModel, getFallbackModel } from "@/lib/gemini";
+import { getModel, getFallbackModel, getVisionFallbackModel } from "@/lib/gemini";
 
 // Set max duration to 60 seconds (max for Hobby plan)
 export const maxDuration = 60;
@@ -88,6 +88,20 @@ Output: [{"context": "人工智障", "correction": "人工智能", "explanation"
       result = await model.generateContent([prompt, contentPart]);
     } catch (primaryError: any) {
       console.warn("Primary model failed, retrying with fallback model...", primaryError.message);
+
+      const primaryMessage = String(primaryError?.message || primaryError || "");
+
+      // If the configured model is text-only, automatically fall back to a vision-capable model.
+      if (/does not support image input|image input/i.test(primaryMessage)) {
+        try {
+          const visionFallbackModel = getVisionFallbackModel(apiKey, accessCode);
+          result = await visionFallbackModel.generateContent([prompt, contentPart]);
+        } catch (visionFallbackError: any) {
+          throw new Error(
+            `当前配置的模型不支持图片输入。请将 Vercel 中的 GOOGLE_MODEL_NAME 改为支持视觉的 Gemini 模型。原始错误: ${primaryMessage}. 回退错误: ${visionFallbackError.message}`
+          );
+        }
+      } else 
       
       // If primary model fails, try fallback strictly to gemini-1.5-pro
       if (process.env.GOOGLE_MODEL_NAME !== "gemini-1.5-pro") {

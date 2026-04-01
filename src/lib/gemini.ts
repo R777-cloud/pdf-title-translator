@@ -54,3 +54,8 @@ export const getFallbackModel = (apiKey?: string, accessCode?: string) => {
   const client = getClient(apiKey, accessCode);
   return client.getGenerativeModel({ model: "gemini-1.5-pro" });
 };
+
+export const getVisionFallbackModel = (apiKey?: string, accessCode?: string) => {
+  const client = getClient(apiKey, accessCode);
+  return client.getGenerativeModel({ model: "gemini-1.5-pro" });
+};
