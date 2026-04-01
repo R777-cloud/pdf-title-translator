@@ -67,7 +67,7 @@ const toOpenAIContent = (content: ContentPart[]) =>
 const getCustomClient = (apiKey?: string, accessCode?: string) => {
   const baseUrl = process.env.GOOGLE_API_BASE_URL?.replace(/\/$/, "");
   const resolvedApiKey = getResolvedApiKey(apiKey, accessCode);
-  const protocol = process.env.GOOGLE_API_PROTOCOL || (isOpenAICompatible(resolvedApiKey) ? "openai" : "gemini");
+  const protocol = process.env.GOOGLE_API_PROTOCOL || "gemini";
 
   if (!baseUrl) {
     return null;
@@ -115,10 +115,11 @@ const getCustomClient = (apiKey?: string, accessCode?: string) => {
   return {
     getGenerativeModel: ({ model }: { model: string }) => ({
       generateContent: async (content: ContentPart[]) => {
-        const response = await fetch(`${baseUrl}/v1beta/models/${model}:generateContent?key=${resolvedApiKey}`, {
+        const response = await fetch(`${baseUrl}/v1beta/models/${model}:generateContent`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${resolvedApiKey}`,
           },
           body: JSON.stringify({
             contents: [
@@ -167,7 +168,7 @@ const getDefaultVisionModelName = () => {
 
   // Custom gateways often expose dedicated image-capable models.
   if (process.env.GOOGLE_API_BASE_URL) {
-    return "gemini-2.5-flash-image";
+    return "gemini-3.1-pro-preview";
   }
 
   return process.env.GOOGLE_MODEL_NAME || "gemini-2.5-pro";
