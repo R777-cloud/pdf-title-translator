@@ -166,12 +166,11 @@ const getDefaultVisionModelName = () => {
     return process.env.GOOGLE_VISION_MODEL_NAME;
   }
 
-  // Custom gateways often expose dedicated image-capable models.
   if (process.env.GOOGLE_API_BASE_URL) {
     return "gemini-3.1-pro-preview";
   }
 
-  return process.env.GOOGLE_MODEL_NAME || "gemini-2.5-pro";
+  return process.env.GOOGLE_MODEL_NAME || "gemini-3.1-pro-preview";
 };
 
 export const getModel = (apiKey?: string, accessCode?: string) => {

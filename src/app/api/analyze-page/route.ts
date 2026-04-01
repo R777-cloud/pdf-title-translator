@@ -104,7 +104,7 @@ Output: [{"context": "人工智障", "correction": "人工智能", "explanation"
       } else 
       
       // If primary model fails, try fallback again using the configured/default vision model
-      if (process.env.GOOGLE_MODEL_NAME !== "gemini-2.5-pro" || process.env.GOOGLE_API_BASE_URL) {
+      if (process.env.GOOGLE_MODEL_NAME !== "gemini-3.1-pro-preview" || process.env.GOOGLE_API_BASE_URL) {
         try {
           const fallbackModel = getFallbackModel(apiKey, accessCode);
           result = await fallbackModel.generateContent([prompt, contentPart]);
