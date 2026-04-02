@@ -165,7 +165,7 @@ const getDefaultVisionModelName = () => {
   return (
     process.env.GOOGLE_VISION_MODEL_NAME ||
     process.env.GOOGLE_MODEL_NAME ||
-    "gemini-3-flash-preview"
+    "gemini-3.1-pro-preview"
   );
 };
 
