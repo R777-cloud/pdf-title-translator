@@ -115,11 +115,10 @@ const getCustomClient = (apiKey?: string, accessCode?: string, protocolOverride?
   return {
     getGenerativeModel: ({ model }: { model: string }) => ({
       generateContent: async (content: ContentPart[]) => {
-        const response = await fetch(`${baseUrl}/v1beta/models/${model}:generateContent`, {
+        const response = await fetch(`${baseUrl}/v1beta/models/${model}:generateContent?key=${resolvedApiKey}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${resolvedApiKey}`,
           },
           body: JSON.stringify({
             contents: [
