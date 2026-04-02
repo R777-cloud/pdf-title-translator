@@ -133,26 +133,16 @@ export function usePdfProcessor() {
     abortControllerRef.current = new AbortController();
     const signal = abortControllerRef.current.signal;
 
-    // Reset results if task type changes or just restart pending/failed
-    // For simplicity, we just process pending/failed. 
-    // If user switches task, they might want to reset. 
-    // But let's assume UI handles reset if needed. 
-    // Actually, if we switch tasks, previous results are invalid.
-    // Let's NOT clear results automatically to allow "resume", but UI should probably prompt reset.
-    // For now, we just process what's pending.
-
-    // Limit batch size if we are resuming from failure to avoid overwhelming the system
-    // But ONLY process pending items to skip previously failed items.
-    const BATCH_SIZE = 20; 
-    
-    // We only process 'pending' items. 'failed' items are ignored unless user explicitly wants to retry them?
-    // Actually, if they failed due to "Payload Too Large", retrying them won't help unless we reduce size.
-    // Let's change the filter to ONLY include "pending" items.
+    // Process pending pages first, then failed pages
+    const BATCH_SIZE = 20;
     const pendingIndices = results
       .map((r, i) => (r.status === "pending" ? i : -1))
       .filter((i) => i !== -1);
-      
-    const limitedQueueIndices = pendingIndices.slice(0, BATCH_SIZE);
+    const failedIndices = results
+      .map((r, i) => (r.status === "failed" ? i : -1))
+      .filter((i) => i !== -1);
+
+    const limitedQueueIndices = [...pendingIndices, ...failedIndices].slice(0, BATCH_SIZE);
 
     let currentIndex = 0;
 
@@ -229,6 +219,46 @@ export function usePdfProcessor() {
     }
   }, [pdfDoc, results]);
 
+  const retryPage = useCallback(async (pageIndex: number) => {
+    if (!pdfDoc || isProcessing) return;
+
+    setIsProcessing(true);
+
+    setResults((prev) => {
+      const next = [...prev];
+      next[pageIndex] = { ...next[pageIndex], status: "processing", error: undefined };
+      return next;
+    });
+
+    let retries = 0;
+    const maxRetries = 2;
+
+    while (retries <= maxRetries) {
+      try {
+        const items = await processPage(pageIndex, pdfDoc, taskType);
+        setResults((prev) => {
+          const next = [...prev];
+          next[pageIndex] = { ...next[pageIndex], status: "completed", items };
+          return next;
+        });
+        break;
+      } catch (err: any) {
+        if (retries === maxRetries) {
+          setResults((prev) => {
+            const next = [...prev];
+            next[pageIndex] = { ...next[pageIndex], status: "failed", error: err.message };
+            return next;
+          });
+        } else {
+          await new Promise(resolve => setTimeout(resolve, 2000 * Math.pow(2, retries)));
+        }
+        retries++;
+      }
+    }
+
+    setIsProcessing(false);
+  }, [pdfDoc, isProcessing, taskType]);
+
   const stopProcessing = useCallback(() => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -278,5 +308,6 @@ export function usePdfProcessor() {
     reset,
     apiKey,
     setApiKey,
+    retryPage,
   };
 }

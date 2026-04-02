@@ -24,6 +24,7 @@ export default function Home() {
     stopProcessing, 
     updateTranslation,
     reset,
+    retryPage,
     taskType,
     apiKey,
     setApiKey
@@ -184,7 +185,7 @@ export default function Home() {
           {/* Main Content */}
           <div className="lg:col-span-3 h-[calc(100vh-200px)] min-h-[500px]">
              {/* Pass results to TranslationTable. Since it is scrollable, we need to ensure container height. */}
-            <TranslationTable results={results} mode={taskType} onUpdate={updateTranslation} />
+            <TranslationTable results={results} mode={taskType} isProcessing={isProcessing} onUpdate={updateTranslation} onRetry={retryPage} />
           </div>
         </div>
       )}

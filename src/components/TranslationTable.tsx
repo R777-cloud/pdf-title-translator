@@ -11,28 +11,50 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { PageResult, AnalysisItem } from "@/hooks/use-pdf-processor";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
+import { RotateCw } from "lucide-react";
 import { memo } from "react";
 
 interface TranslationTableProps {
   results: PageResult[];
   mode: "translate" | "proofread";
+  isProcessing: boolean;
   onUpdate: (pageIndex: number, itemIndex: number, field: string, value: string) => void;
+  onRetry: (pageIndex: number) => void;
 }
 
-const TranslationRow = memo(({ 
-  pageResult, 
-  pageIndex, 
-  onUpdate 
-}: { 
-  pageResult: PageResult, 
-  pageIndex: number, 
-  onUpdate: TranslationTableProps["onUpdate"] 
+const TranslationRow = memo(({
+  pageResult,
+  pageIndex,
+  isProcessing,
+  onUpdate,
+  onRetry,
+}: {
+  pageResult: PageResult,
+  pageIndex: number,
+  isProcessing: boolean,
+  onUpdate: TranslationTableProps["onUpdate"],
+  onRetry: TranslationTableProps["onRetry"],
 }) => {
+  const retryButton = (pageResult.status === "failed" || pageResult.status === "completed") && (
+    <Button
+      variant="ghost"
+      size="sm"
+      disabled={isProcessing}
+      onClick={() => onRetry(pageIndex)}
+      className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+    >
+      <RotateCw className="h-3 w-3 mr-1" />
+      重试
+    </Button>
+  );
+
   if (pageResult.items.length === 0) {
     return (
       <TableRow>
         <TableCell className="font-medium w-[80px] align-top text-muted-foreground">
-          第 {pageResult.pageNumber} 页
+          <div>第 {pageResult.pageNumber} 页</div>
+          {retryButton}
         </TableCell>
         <TableCell colSpan={4} className="text-muted-foreground h-16">
           {pageResult.status === "processing" ? "正在分析..." : 
@@ -59,11 +81,12 @@ const TranslationRow = memo(({
       {pageResult.items.map((item, itemIndex) => (
         <TableRow key={`${pageIndex}-${itemIndex}`}>
           {itemIndex === 0 && (
-            <TableCell 
-              rowSpan={pageResult.items.length} 
+            <TableCell
+              rowSpan={pageResult.items.length}
               className="font-medium w-[80px] align-top border-r bg-muted/10"
             >
-              第 {pageResult.pageNumber} 页
+              <div>第 {pageResult.pageNumber} 页</div>
+              {retryButton}
             </TableCell>
           )}
           
@@ -122,7 +145,7 @@ const TranslationRow = memo(({
 
 TranslationRow.displayName = "TranslationRow";
 
-export function TranslationTable({ results, mode, onUpdate }: TranslationTableProps) {
+export function TranslationTable({ results, mode, isProcessing, onUpdate, onRetry }: TranslationTableProps) {
   // Determine global mode from props
   const isProofreadMode = mode === "proofread";
 
@@ -149,11 +172,13 @@ export function TranslationTable({ results, mode, onUpdate }: TranslationTablePr
         <Table>
           <TableBody>
             {results.map((page, index) => (
-              <TranslationRow 
-                key={page.pageNumber} 
-                pageResult={page} 
-                pageIndex={index} 
-                onUpdate={onUpdate} 
+              <TranslationRow
+                key={page.pageNumber}
+                pageResult={page}
+                pageIndex={index}
+                isProcessing={isProcessing}
+                onUpdate={onUpdate}
+                onRetry={onRetry}
               />
             ))}
           </TableBody>
