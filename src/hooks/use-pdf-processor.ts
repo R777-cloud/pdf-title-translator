@@ -24,8 +24,6 @@ export interface PageResult {
   originalImage?: string;
 }
 
-// const CONCURRENT_LIMIT = 1; // Removed constant
-
 export function usePdfProcessor() {
   const [file, setFile] = useState<File | null>(null);
   const [pdfDoc, setPdfDoc] = useState<PDFDocumentProxy | null>(null);
@@ -35,9 +33,11 @@ export function usePdfProcessor() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [taskType, setTaskType] = useState<"translate" | "proofread">("translate");
   const [apiKey, setApiKey] = useState<string>("");
-  const [accessCode, setAccessCode] = useState<string>("");
-  
+
   const abortControllerRef = useRef<AbortController | null>(null);
+  // Ref to hold latest apiKey so processPage always reads the current value
+  const apiKeyRef = useRef(apiKey);
+  apiKeyRef.current = apiKey;
 
   const loadPdf = useCallback(async (file: File) => {
     try {
@@ -96,7 +96,7 @@ export function usePdfProcessor() {
       const response = await fetch("/api/analyze-page", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image: imageData, task, apiKey, accessCode }),
+        body: JSON.stringify({ image: imageData, task, apiKey: apiKeyRef.current }),
       });
 
       if (!response.ok) {
@@ -278,7 +278,5 @@ export function usePdfProcessor() {
     reset,
     apiKey,
     setApiKey,
-    accessCode,
-    setAccessCode
   };
 }

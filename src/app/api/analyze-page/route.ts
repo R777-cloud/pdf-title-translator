@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getModel, getFallbackModel, getVisionFallbackModel, getModelWithProtocol } from "@/lib/gemini";
+import { getModel, getFallbackModel, getModelWithProtocol } from "@/lib/gemini";
 
 // Set max duration to 60 seconds (max for Hobby plan)
 export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   try {
-    const { image, task = "translate", apiKey, accessCode } = await req.json();
+    const { image, task = "translate", apiKey } = await req.json();
 
     if (!image) {
       return NextResponse.json(
@@ -84,7 +84,7 @@ Output: [{"context": "人工智障", "correction": "人工智能", "explanation"
 
     let result;
     try {
-      const model = getModel(apiKey, accessCode);
+      const model = getModel(apiKey);
       result = await model.generateContent([prompt, contentPart]);
     } catch (primaryError: any) {
       console.warn("Primary model failed, retrying with fallback model...", primaryError.message);
@@ -98,7 +98,7 @@ Output: [{"context": "人工智障", "correction": "人工智能", "explanation"
           const alternateProtocol = currentProtocol === "gemini" ? "openai" : "gemini";
           const alternateModel = getModelWithProtocol(
             apiKey,
-            accessCode,
+            undefined,
             alternateProtocol,
             process.env.GOOGLE_VISION_MODEL_NAME || process.env.GOOGLE_MODEL_NAME || "gemini-3.1-pro-preview",
           );
@@ -113,7 +113,7 @@ Output: [{"context": "人工智障", "correction": "人工智能", "explanation"
       // If primary model fails, try fallback again using the configured/default vision model
       if (process.env.GOOGLE_MODEL_NAME !== "gemini-3.1-pro-preview" || process.env.GOOGLE_API_BASE_URL) {
         try {
-          const fallbackModel = getFallbackModel(apiKey, accessCode);
+          const fallbackModel = getFallbackModel(apiKey);
           result = await fallbackModel.generateContent([prompt, contentPart]);
         } catch (fallbackError: any) {
           throw new Error(`Primary and fallback models failed. Primary: ${primaryError.message}. Fallback: ${fallbackError.message}`);

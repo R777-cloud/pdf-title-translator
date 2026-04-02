@@ -14,11 +14,13 @@ export function ProcessingStatus({ progress, total, results }: ProcessingStatusP
   const processing = results.filter((r) => r.status === "processing").length;
   const failed = results.filter((r) => r.status === "failed").length;
 
+  const isActive = processing > 0;
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between text-sm">
         <span className="font-medium text-foreground">
-          处理中... {Math.round(progress)}%
+          {isActive ? `处理中... ${Math.round(progress)}%` : `进度 ${Math.round(progress)}%`}
         </span>
         <span className="text-muted-foreground">
           {completed}/{total} 页
