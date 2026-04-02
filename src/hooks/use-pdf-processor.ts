@@ -134,7 +134,6 @@ export function usePdfProcessor() {
     const signal = abortControllerRef.current.signal;
 
     // Process pending pages first, then failed pages
-    const BATCH_SIZE = 20;
     const pendingIndices = results
       .map((r, i) => (r.status === "pending" ? i : -1))
       .filter((i) => i !== -1);
@@ -142,16 +141,16 @@ export function usePdfProcessor() {
       .map((r, i) => (r.status === "failed" ? i : -1))
       .filter((i) => i !== -1);
 
-    const limitedQueueIndices = [...pendingIndices, ...failedIndices].slice(0, BATCH_SIZE);
+    const queueIndices = [...pendingIndices, ...failedIndices];
 
     let currentIndex = 0;
 
     const worker = async () => {
-      while (currentIndex < limitedQueueIndices.length && !signal.aborted) {
+      while (currentIndex < queueIndices.length && !signal.aborted) {
         const queueIndex = currentIndex++;
-        if (queueIndex >= limitedQueueIndices.length) break;
+        if (queueIndex >= queueIndices.length) break;
 
-        const pageIndex = limitedQueueIndices[queueIndex];
+        const pageIndex = queueIndices[queueIndex];
 
         setResults((prev) => {
           const next = [...prev];
@@ -208,7 +207,7 @@ export function usePdfProcessor() {
 
     const concurrencyLimit = 3; // Always allow concurrency even for retries/proofread to avoid getting stuck
 
-    const workers = Array(Math.min(concurrencyLimit, limitedQueueIndices.length))
+    const workers = Array(Math.min(concurrencyLimit, queueIndices.length))
       .fill(null)
       .map(() => worker());
 
