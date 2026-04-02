@@ -27,22 +27,29 @@ const TranslationRow = memo(({
   pageResult,
   pageIndex,
   isProcessing,
+  mode,
   onUpdate,
   onRetry,
 }: {
   pageResult: PageResult,
   pageIndex: number,
   isProcessing: boolean,
+  mode: "translate" | "proofread",
   onUpdate: TranslationTableProps["onUpdate"],
   onRetry: TranslationTableProps["onRetry"],
 }) => {
-  const retryButton = (pageResult.status === "failed" || pageResult.status === "completed") && (
+  const canRetry = pageResult.status === "failed" || pageResult.status === "completed";
+  const retryButton = (
     <Button
       variant="ghost"
       size="sm"
-      disabled={isProcessing}
+      disabled={isProcessing || !canRetry}
       onClick={() => onRetry(pageIndex)}
-      className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+      className={`h-7 px-2 text-xs ${
+        canRetry && !isProcessing
+          ? "text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-950"
+          : "text-muted-foreground"
+      }`}
     >
       <RotateCw className="h-3 w-3 mr-1" />
       重试
@@ -53,11 +60,10 @@ const TranslationRow = memo(({
     return (
       <TableRow>
         <TableCell className="font-medium w-[80px] align-top text-muted-foreground">
-          <div>第 {pageResult.pageNumber} 页</div>
-          {retryButton}
+          第 {pageResult.pageNumber} 页
         </TableCell>
-        <TableCell colSpan={4} className="text-muted-foreground h-16">
-          {pageResult.status === "processing" ? "正在分析..." : 
+        <TableCell colSpan={mode === "proofread" ? 3 : 2} className="text-muted-foreground h-16">
+          {pageResult.status === "processing" ? "正在分析..." :
            pageResult.status === "failed" ? (
              <div className="space-y-1 py-2 text-left">
                <div className="text-red-500 font-medium">分析失败</div>
@@ -67,6 +73,9 @@ const TranslationRow = memo(({
              </div>
            ) :
            pageResult.status === "pending" ? <div className="text-center italic">等待中...</div> : <div className="text-center italic">未发现相关内容</div>}
+        </TableCell>
+        <TableCell className="align-middle text-center w-[70px]">
+          {retryButton}
         </TableCell>
       </TableRow>
     );
@@ -85,8 +94,7 @@ const TranslationRow = memo(({
               rowSpan={pageResult.items.length}
               className="font-medium w-[80px] align-top border-r bg-muted/10"
             >
-              <div>第 {pageResult.pageNumber} 页</div>
-              {retryButton}
+              第 {pageResult.pageNumber} 页
             </TableCell>
           )}
           
@@ -137,6 +145,14 @@ const TranslationRow = memo(({
               </TableCell>
             </>
           )}
+          {itemIndex === 0 && (
+            <TableCell
+              rowSpan={pageResult.items.length}
+              className="align-middle text-center w-[70px] border-l"
+            >
+              {retryButton}
+            </TableCell>
+          )}
         </TableRow>
       ))}
     </>
@@ -152,7 +168,7 @@ export function TranslationTable({ results, mode, isProcessing, onUpdate, onRetr
   return (
     <div className="rounded-md border h-full flex flex-col bg-background">
       <div className="border-b bg-muted/40 p-4">
-        <div className={`grid gap-4 font-semibold text-sm text-muted-foreground px-2 ${isProofreadMode ? 'grid-cols-[80px_1fr_1fr_1fr]' : 'grid-cols-[80px_1fr_1fr]'}`}>
+        <div className={`grid gap-4 font-semibold text-sm text-muted-foreground px-2 ${isProofreadMode ? 'grid-cols-[80px_1fr_1fr_1fr_70px]' : 'grid-cols-[80px_1fr_1fr_70px]'}`}>
           <div>页码</div>
           {isProofreadMode ? (
             <>
@@ -166,6 +182,7 @@ export function TranslationTable({ results, mode, isProcessing, onUpdate, onRetr
               <div>译文标题 (英文)</div>
             </>
           )}
+          <div>操作</div>
         </div>
       </div>
       <ScrollArea className="flex-1">
@@ -177,6 +194,7 @@ export function TranslationTable({ results, mode, isProcessing, onUpdate, onRetr
                 pageResult={page}
                 pageIndex={index}
                 isProcessing={isProcessing}
+                mode={mode}
                 onUpdate={onUpdate}
                 onRetry={onRetry}
               />
